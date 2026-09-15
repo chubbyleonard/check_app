@@ -27,6 +27,7 @@ flutter:
 
   assets:
     - assets/logos/
+    - assets/routing.json
 
   fonts:
     - family: MICR
