@@ -16,7 +16,7 @@ android {
 
     defaultConfig {
     applicationId = "com.example.check_app"
-    minSdk = 21
+    minSdk = flutter.minSdkVersion
     targetSdk = flutter.targetSdkVersion
     versionCode = flutter.versionCode
     versionName = flutter.versionName
@@ -30,7 +30,7 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
-}
+
 
 kotlin {
     compilerOptions {
