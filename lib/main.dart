@@ -194,7 +194,7 @@ class SignaturePainter extends CustomPainter {
     Paint paint = Paint()
       ..color = Colors.black87
       ..strokeCap = StrokeCap.round
-      ..strokeWidth = 2.0 // Slightly bolder ink for real-world translation
+      ..strokeWidth = 2.0 
       ..style = PaintingStyle.stroke;
 
     for (int i = 0; i < points.length - 1; i++) {
@@ -263,7 +263,7 @@ class _CheckEditorScreenState extends State<CheckEditorScreen> {
       ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       if (byteData != null) {
         context.read<CheckProvider>().setSignature(byteData.buffer.asUint8List());
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Signature applied to check.')));
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Proper Signature applied.')));
       }
     } catch (e) {
       debugPrint("Signature capture failed: $e");
@@ -290,8 +290,8 @@ class _CheckEditorScreenState extends State<CheckEditorScreen> {
           ),
           FilledButton.icon(
             style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(horizontal: 14)),
-            icon: const Icon(Icons.print, size: 18),
-            label: const Text('Print Document'),
+            icon: const Icon(Icons.picture_as_pdf, size: 18),
+            label: const Text('Generate PDF'),
             onPressed: () => _printCheckDocument(provider, context),
           ),
           const SizedBox(width: 8),
@@ -301,6 +301,7 @@ class _CheckEditorScreenState extends State<CheckEditorScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 16.0),
         child: Column(
           children: [
+            // Live Preview Section
             Center(
               child: Container(
                 constraints: const BoxConstraints(maxWidth: 820),
@@ -322,6 +323,7 @@ class _CheckEditorScreenState extends State<CheckEditorScreen> {
             ),
             const SizedBox(height: 32),
 
+            // Form Controls
             Card(
               elevation: 1,
               child: Padding(
@@ -356,7 +358,7 @@ class _CheckEditorScreenState extends State<CheckEditorScreen> {
                       ],
                     ),
                     Container(
-                      height: 140, 
+                      height: 120, 
                       width: double.infinity,
                       decoration: BoxDecoration(color: Colors.white, border: Border.all(color: Colors.grey.shade400)),
                       child: Stack(
@@ -513,7 +515,7 @@ class _CheckEditorScreenState extends State<CheckEditorScreen> {
   }
 
   // -----------------------------------------------------------
-  // PDF GENERATION & PRINT ENGINE
+  // PDF GENERATION & FILE SAVING ENGINE
   // -----------------------------------------------------------
   Future<void> _printCheckDocument(CheckProvider p, BuildContext context) async {
     try {
@@ -540,10 +542,8 @@ class _CheckEditorScreenState extends State<CheckEditorScreen> {
       /// ==========================================
       const double pdfMemoLineThickness = 0.6;      
       const double pdfSignatureLineThickness = 1.0; 
-      const double pdfMemoPaddingBottom = 2.0; 
-      const double pdfSignaturePaddingBottom = 2.0; 
-      const double pdfSignatureImageHeight = 55.0; // Scaled up significantly to accurately represent ink weight
-      const double pdfSignatureImageBottomOffset = 5.0; // Raised to keep it clearly above the line
+      const double pdfSignatureImageHeight = 40.0; 
+      const double pdfSignatureImageBottomOffset = 4.0; 
       /// ==========================================
 
       final pageFormat = PdfPageFormat(6.0 * PdfPageFormat.inch, 2.75 * PdfPageFormat.inch, marginAll: 0);
@@ -630,10 +630,11 @@ class _CheckEditorScreenState extends State<CheckEditorScreen> {
                     ),
                   ),
                   
+                  // FIXED ALIGNMENT: Pushed all the way down to bottom: 15
                   pw.Positioned(
-                    bottom: 25, left: 0, right: 0,
+                    bottom: 15, left: 0, right: 0,
                     child: pw.Container(
-                      height: 30, 
+                      height: 25, 
                       child: pw.Row(
                         crossAxisAlignment: pw.CrossAxisAlignment.end,
                         children: [
@@ -643,12 +644,12 @@ class _CheckEditorScreenState extends State<CheckEditorScreen> {
                               crossAxisAlignment: pw.CrossAxisAlignment.end,
                               children: [
                                 pw.Padding(
-                                  padding: pw.EdgeInsets.only(bottom: pdfMemoPaddingBottom, right: 4),
+                                  padding: pw.EdgeInsets.only(bottom: 2, right: 4),
                                   child: pw.Text('MEMO ', style: pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold)),
                                 ),
                                 pw.Expanded(
                                   child: pw.Container(
-                                    padding: pw.EdgeInsets.only(bottom: pdfMemoPaddingBottom),
+                                    padding: pw.EdgeInsets.only(bottom: 2),
                                     decoration: pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide(color: PdfColors.black, width: pdfMemoLineThickness))),
                                     child: pw.Text(p.memo, style: pw.TextStyle(font: handwritingFont, fontSize: 10)), 
                                   ),
@@ -664,7 +665,7 @@ class _CheckEditorScreenState extends State<CheckEditorScreen> {
                               children: [
                                 pw.Container(
                                   width: double.infinity,
-                                  padding: pw.EdgeInsets.only(bottom: pdfSignaturePaddingBottom),
+                                  padding: pw.EdgeInsets.only(bottom: 2),
                                   decoration: pw.BoxDecoration(border: pw.Border(bottom: pw.BorderSide(color: PdfColors.black, width: pdfSignatureLineThickness))),
                                   alignment: pw.Alignment.bottomRight,
                                   child: pw.Text('AUTHORIZED SIGNATURE', style: pw.TextStyle(fontSize: 5)),
@@ -672,8 +673,7 @@ class _CheckEditorScreenState extends State<CheckEditorScreen> {
                                 if (p.signatureBytes != null)
                                   pw.Positioned(
                                     bottom: pdfSignatureImageBottomOffset,
-                                    left: 0,
-                                    right: 0,
+                                    left: 0, right: 0,
                                     child: pw.Center(
                                       child: pw.Image(pw.MemoryImage(p.signatureBytes!), height: pdfSignatureImageHeight, fit: pw.BoxFit.contain), 
                                     ),
@@ -701,14 +701,14 @@ class _CheckEditorScreenState extends State<CheckEditorScreen> {
         ),
       );
 
-      await Printing.layoutPdf(
-        onLayout: (PdfPageFormat format) async => pdf.save(),
-        name: 'Check_${p.checkNumber}.pdf',
+      await Printing.sharePdf(
+        bytes: await pdf.save(),
+        filename: 'Check_${p.checkNumber}.pdf',
       );
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Print Engine Error: $e'), backgroundColor: Colors.redAccent),
+          SnackBar(content: Text('PDF Generation Error: $e'), backgroundColor: Colors.redAccent),
         );
       }
     }
@@ -730,10 +730,8 @@ class CheckFrontPreview extends StatelessWidget {
     /// ==========================================
     const double screenMemoLineThickness = 1.0;
     const double screenSignatureLineThickness = 1.2;
-    const double screenMemoPaddingBottom = 2.0;
-    const double screenSignaturePaddingBottom = 2.0;
-    const double screenSignatureImageHeight = 55.0; // Scaled up to match PDF logic
-    const double screenSignatureImageBottomOffset = 4.0;
+    const double screenSignatureImageHeight = 50.0; 
+    const double screenSignatureImageBottomOffset = 2.0;
     /// ==========================================
     
     return Container(
@@ -817,8 +815,9 @@ class CheckFrontPreview extends StatelessWidget {
             ),
           ),
           
+          // FIXED ALIGNMENT: Pushed all the way down to bottom: 22 to close the huge gap
           Positioned(
-            bottom: 35, left: 0, right: 0,
+            bottom: 22, left: 0, right: 0,
             child: SizedBox(
               height: 40,
               child: Row(
@@ -829,13 +828,13 @@ class CheckFrontPreview extends StatelessWidget {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Padding(
-                          padding: EdgeInsets.only(bottom: screenMemoPaddingBottom, right: 6),
-                          child: const Text('MEMO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 2, right: 6),
+                          child: Text('MEMO', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
                         ),
                         Expanded(
                           child: Container(
-                            padding: EdgeInsets.only(bottom: screenMemoPaddingBottom),
+                            padding: const EdgeInsets.only(bottom: 2),
                             decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.black87, width: screenMemoLineThickness))),
                             child: Text(p.memo, style: const TextStyle(fontFamily: 'Handwriting', fontSize: 16, height: 1.0)), 
                           ),
@@ -852,7 +851,7 @@ class CheckFrontPreview extends StatelessWidget {
                       children: [
                         Container(
                           width: double.infinity,
-                          padding: EdgeInsets.only(bottom: screenSignaturePaddingBottom),
+                          padding: const EdgeInsets.only(bottom: 2),
                           decoration: BoxDecoration(border: Border(bottom: BorderSide(color: Colors.black87, width: screenSignatureLineThickness))),
                           alignment: Alignment.bottomRight,
                           child: const Text('AUTHORIZED SIGNATURE', style: TextStyle(fontSize: 7, color: Colors.black54)),
@@ -860,8 +859,7 @@ class CheckFrontPreview extends StatelessWidget {
                         if (p.signatureBytes != null)
                           Positioned(
                             bottom: screenSignatureImageBottomOffset, 
-                            left: 0,
-                            right: 0,
+                            left: 0, right: 0,
                             child: Center(
                               child: Image.memory(p.signatureBytes!, height: screenSignatureImageHeight, fit: BoxFit.contain),
                             ),
