@@ -1,0 +1,37 @@
+name: check_app
+description: "US Bank Check Generator and Editor"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  provider: ^6.1.2
+  shared_preferences: ^2.2.2
+  pdf: ^3.10.8
+  printing: ^5.13.1
+  image_picker: ^1.2.3
+  http: ^1.2.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/logos/
+
+  fonts:
+    - family: MICR
+      fonts:
+        - asset: assets/fonts/MICR-E13B.ttf
+    - family: Handwriting
+      fonts:
+        - asset: assets/fonts/Handwriting.ttf
